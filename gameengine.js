@@ -19,6 +19,11 @@ function GameEngine() {
 GameEngine.prototype.startInput = function () {    
     console.log('Starting input');
     var that = this;// event listeners are added here
+    this.ctx.canvas.addEventListener("click", function (e) {
+        that.click = getXandY(e);
+        console.log(e);
+        console.log("Left Click Event - X,Y " + e.clientX + ", " + e.clientY);
+    }, false);
     this.ctx.canvas.addEventListener("keydown", function (e) {
         if(e.code === "Space") {
             // e.preventDefault();
