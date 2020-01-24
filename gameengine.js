@@ -16,11 +16,26 @@ function GameEngine() {
     this.surfaceHeight = null;
 }
 
+GameEngine.prototype.startInput = function () {    
+    console.log('Starting input');
+    var that = this;// event listeners are added here
+    this.ctx.canvas.addEventListener("keydown", function (e) {
+        if(e.code === "Space") {
+            // e.preventDefault();
+            that.pause();
+        }
+        console.log("Key Down Event - Char " + e.code + " Code " + e.keyCode);
+    }, false);  
+    console.log('Input started');
+}
+
 GameEngine.prototype.init = function (ctx) {
     this.ctx = ctx;
     this.surfaceWidth = this.ctx.canvas.width;
     this.surfaceHeight = this.ctx.canvas.height;
     this.timer = new Timer();
+    this.startInput();
+    this.gamePaused = false;
     console.log('game initialized');
 }
 
@@ -31,6 +46,18 @@ GameEngine.prototype.start = function () {
         that.loop();
         requestAnimFrame(gameLoop, that.ctx.canvas);
     })();
+}
+
+GameEngine.prototype.pause = function () {
+    if (this.gamePaused) {
+        console.log("unpause game");
+        this.gamePaused = false;
+    } else {
+        console.log("pause game");
+        this.gamePaused = true;
+    }
+
+    var that = this;
 }
 
 GameEngine.prototype.addEntity = function (entity) {
@@ -59,9 +86,11 @@ GameEngine.prototype.update = function () {
 
 GameEngine.prototype.loop = function () {
     this.clockTick = this.timer.tick();
+    if (this.gamePaused) return;
     this.update();
     this.draw();
 }
+
 
 function Timer() {
     this.gameTime = 0;
