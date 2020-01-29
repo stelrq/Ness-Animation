@@ -26,7 +26,10 @@ Animation.prototype.drawFrame = function (tick, ctx, x, y, ent) {
         } else if (ent.state < ent.trickArray.length) {
             ent.state++; //this is specific to this animation to iterate the trick list.
             this.elapsedTime = this.elapsedTime - this.totalTime;
-            if(ent.state >= ent.trickArray.length) {
+            if((ent.state >= 3 && ent.altTrick)) {
+                ent.state = 0;
+                ent.x += 40;
+            } else if (ent.state >= ent.trickArray.length) {
                 ent.state = 0;
             }
             return;
@@ -47,12 +50,16 @@ Animation.prototype.drawFrame = function (tick, ctx, x, y, ent) {
     if (this.correctionsY && this.correctionsY[xindex]) {
         curcorrectionY = this.correctionsY[xindex];
     }
+    var curCorrectionPos = curcorrection;
+    if (this.correctionsPos && this.correctionsPos[xindex]) {
+        curCorrectionPos = this.correctionsPos[xindex];
+    }
     var correctedX = curcorrection < 0 ? x:x + Math.floor(curcorrection/2);
     console.log('frame: ', frame);
     ctx.drawImage(this.spriteSheet,
                  this.srcX + curcorrection + xindex * this.frameWidth, this.srcY + yindex * this.frameHeight,  // source from sheet
                  this.frameWidth, this.frameHeight,
-                 correctedX, y - curcorrectionY,
+                 x + curCorrectionPos, y - curcorrectionY,
                  this.frameWidth * this.scale,
                  this.frameHeight * this.scale);
 }
@@ -89,18 +96,22 @@ function Ness(game, spritesheet) {
     this.animation = new Animation(spritesheet, 155, 70, 56, 110, 8, frameRate, 8, true, 1.5, {1:2, 2:3, 3:0, 4:6, 5:7, 6:6, 7:8});
     this.animationChargeDown = new Animation(spritesheet, 190, 240, 160, 110, 3, frameRate, 3, false, 1.5);
     this.animationChargeUp = new Animation(spritesheet, 200, 545, 175, 80, 3, frameRate, 3, false, 1.5);
-    var yoUpCorrection = {1:-15, 3:-20, 4:-30, 5:-35, 6:-50, 7:-50, 8:-20, 9:-30, 10:10, 11:10};
-    this.animationYoUp = new Animation(spritesheet, 35, 683, 150, 125, 12, frameRate, 12, false, 1.5, yoUpCorrection);
+    var yoUpCorrection = {1:-15, 3:-20, 4:-30, 5:-35, 6:-60, 7:-60, 8:-30, 9:-30, 10:10, 11:10};
+    var yoUpCorrectionPos = {5:-25, 7:-35, 8:-50, 9:-35, 10: -15};
+    this.animationYoUp = new Animation(spritesheet, 35, 683, 150, 125, 12, frameRate, 12, false, 1.5, yoUpCorrection, yoUpCorrectionPos);
     var yoUpCorrectionY = {};
     for (var i = 0; i < this.animationYoUp.frames; i++) {
-        yoUpCorrectionY[i] = 60;
+        yoUpCorrectionY[i] = 62;
     }
     this.animationYoUp.correctionsY = yoUpCorrectionY;
     var yoCorrection = {3:-18, 4:-25, 5:-20, 6:20, 7:20, 8:10};
-    this.animationYo = new Animation(spritesheet, 112, 390, 150, 110, 10, frameRate, 10, false, 1.5, yoCorrection);
+    var yoCorrectionPos = {0:30, 1:35, 2:40, 3:10, 4:30, 5:40, 6:30, 7:30, 8:20, 9:20};
+    this.animationYo = new Animation(spritesheet, 112, 390, 150, 110, 10, frameRate, 10, false, 1.5, yoCorrection, yoCorrectionPos);
     this.speed = 275;
     this.state = 0;
     this.startTricking = false;
+    this.altTrick = false;
+    this.trickCycle = 0;
     this.trickArray = [this.animation, this.animationChargeDown, this.animationYo, this.animationChargeUp, this.animationYoUp];
     this.ctx = game.ctx;
     Entity.call(this, game, 0, 260);
@@ -115,8 +126,15 @@ Ness.prototype.update = function () {
     }
     if (this.x > 400 && !this.startTricking) {
         this.startTricking = true;
-        this.state = 1;
-        this.x = 300;
+        if (this.altTrick) {
+            this.state = 3;
+            this.altTrick = false;
+        } else {
+            this.state = 1;
+            this.altTrick = true;
+            this.x -= 125;
+        }
+
     }
     if (this.x > 800) {
         this.x = -230;
