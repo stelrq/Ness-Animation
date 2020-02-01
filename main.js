@@ -1,5 +1,5 @@
 var AM = new AssetManager();
-
+const SNOOP_PATH = "./img/othersnoop.png";
 function Animation(spriteSheet, srcX, srcY, frameWidth, frameHeight, sheetWidth, frameDuration, frames, loop, scale, correctionsX, correctionsPos) {
     this.spriteSheet = spriteSheet;
     this.srcX = srcX;
@@ -23,7 +23,7 @@ Animation.prototype.drawFrame = function (tick, ctx, x, y, ent) {
     if (this.isDone()) {
         if (this.loop) {
             this.elapsedTime = this.elapsedTime - this.totalTime;
-        } else if (ent.state < ent.trickArray.length) {
+        } else if (ent && ent.state < ent.trickArray.length) {
             ent.state++; //this is specific to this animation to iterate the trick list.
             this.elapsedTime = this.elapsedTime - this.totalTime;
             if((ent.state >= 3 && ent.altTrick)) {
@@ -92,13 +92,13 @@ Background.prototype.update = function () {
 
 // inheritance 
 function Ness(game, spritesheet) {
-    var frameRate = .075;
-    this.animation = new Animation(spritesheet, 155, 70, 56, 110, 8, frameRate, 8, true, 1.5, {1:2, 2:3, 3:0, 4:6, 5:7, 6:6, 7:8});
-    this.animationChargeDown = new Animation(spritesheet, 190, 240, 160, 110, 3, frameRate, 3, false, 1.5);
-    this.animationChargeUp = new Animation(spritesheet, 200, 545, 175, 80, 3, frameRate, 3, false, 1.5);
+    var frameDuration = .075;
+    this.animation = new Animation(spritesheet, 155, 70, 56, 110, 8, frameDuration, 8, true, 1.5, {1:2, 2:3, 3:0, 4:6, 5:7, 6:6, 7:8});
+    this.animationChargeDown = new Animation(spritesheet, 190, 240, 160, 110, 3, frameDuration, 3, false, 1.5);
+    this.animationChargeUp = new Animation(spritesheet, 200, 545, 175, 80, 3, frameDuration, 3, false, 1.5);
     var yoUpCorrection = {1:-15, 3:-20, 4:-30, 5:-35, 6:-60, 7:-60, 8:-30, 9:-30, 10:10, 11:10};
     var yoUpCorrectionPos = {5:-25, 7:-35, 8:-50, 9:-35, 10: -15};
-    this.animationYoUp = new Animation(spritesheet, 35, 683, 150, 125, 12, frameRate, 12, false, 1.5, yoUpCorrection, yoUpCorrectionPos);
+    this.animationYoUp = new Animation(spritesheet, 35, 683, 150, 125, 12, frameDuration, 12, false, 1.5, yoUpCorrection, yoUpCorrectionPos);
     var yoUpCorrectionY = {};
     for (var i = 0; i < this.animationYoUp.frames; i++) {
         yoUpCorrectionY[i] = 62;
@@ -106,7 +106,7 @@ function Ness(game, spritesheet) {
     this.animationYoUp.correctionsY = yoUpCorrectionY;
     var yoCorrection = {3:-18, 4:-25, 5:-20, 6:20, 7:20, 8:10};
     var yoCorrectionPos = {0:30, 1:35, 2:40, 3:10, 4:30, 5:40, 6:30, 7:30, 8:20, 9:20};
-    this.animationYo = new Animation(spritesheet, 112, 390, 150, 110, 10, frameRate, 10, false, 1.5, yoCorrection, yoCorrectionPos);
+    this.animationYo = new Animation(spritesheet, 112, 390, 150, 110, 10, frameDuration, 10, false, 1.5, yoCorrection, yoCorrectionPos);
     this.speed = 275;
     this.state = 0;
     this.startTricking = false;
@@ -115,6 +115,25 @@ function Ness(game, spritesheet) {
     this.trickArray = [this.animation, this.animationChargeDown, this.animationYo, this.animationChargeUp, this.animationYoUp];
     this.ctx = game.ctx;
     Entity.call(this, game, 0, 260);
+}
+
+function Snoop(game, spritesheet) {//spriteSheet, srcX, srcY, frameWidth, frameHeight, sheetWidth, frameDuration, frames, loop, scale, correctionsX, correctionsPos
+    var frameDuration = .15;
+    this.animation = new Animation(spritesheet, 0, 115, 93, 108, 8, frameDuration, 64, true, 2);
+    this.speed = 0;
+    this.ctx = game.ctx;
+    Entity.call(this, game, 5, 95);
+}
+
+Snoop.prototype = new Entity();
+Snoop.prototype.constructor = Snoop;
+
+Snoop.prototype.update = function () {
+    Entity.prototype.update.call(this);
+}
+
+Snoop.prototype.draw = function () {
+    this.animation.drawFrame(this.game.clockTick, this.ctx, this.x, this.y);
 }
 
 Ness.prototype = new Entity();
@@ -154,7 +173,7 @@ Ness.prototype.draw = function () {
 
 AM.queueDownload("./img/scaledmoves.png");
 AM.queueDownload("./img/background.jpg");
-
+AM.queueDownload(SNOOP_PATH);
 AM.downloadAll(function () {
     var canvas = document.getElementById("gameWorld");
     var ctx = canvas.getContext("2d");
@@ -164,6 +183,7 @@ AM.downloadAll(function () {
     gameEngine.start();
 
     gameEngine.addEntity(new Background(gameEngine, AM.getAsset("./img/background.jpg")));
+    gameEngine.addEntity(new Snoop(gameEngine, AM.getAsset(SNOOP_PATH)));
     gameEngine.addEntity(new Ness(gameEngine, AM.getAsset("./img/scaledmoves.png")));
 
     console.log("All Done!");
